@@ -107,7 +107,7 @@ namespace ValiKop.Api.Services
                 Nome = usuario.Nome,
                 TipoUsuario = usuario.TipoUsuario,
                 ForcarTrocaSenha = usuario.PasswordTemp,
-                Token = "Bearer "+ tokenString
+                Token = tokenString
             };
         }
 

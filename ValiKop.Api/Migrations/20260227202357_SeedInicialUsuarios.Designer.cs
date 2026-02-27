@@ -12,7 +12,7 @@ using ValiKop.Api.Data;
 namespace ValiKop.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260226201958_SeedInicialUsuarios")]
+    [Migration("20260227202357_SeedInicialUsuarios")]
     partial class SeedInicialUsuarios
     {
         /// <inheritdoc />

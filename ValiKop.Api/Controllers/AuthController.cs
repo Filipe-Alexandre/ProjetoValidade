@@ -9,6 +9,7 @@ namespace ValiKop.Api.Controllers
 {
     [ApiController]
     [Route("api/auth")]
+    [Authorize]
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
@@ -33,7 +34,6 @@ namespace ValiKop.Api.Controllers
 
         // ALTERAR SENHA (usuário logado)
         [HttpPut("alterar-senha")]
-        [Authorize]
         public async Task<IActionResult> AlterarSenha([FromBody] UsuarioAlterarSenhaDTO dto)
         {
             var usuarioIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
@@ -50,7 +50,6 @@ namespace ValiKop.Api.Controllers
 
         // LOGOUT (dummy)
         [HttpPost("logout")]
-        [Authorize]
         public IActionResult Logout()
         {
             return Ok();

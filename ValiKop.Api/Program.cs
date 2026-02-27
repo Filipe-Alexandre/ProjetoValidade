@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
-using Microsoft.OpenApi.Models; // Namespace necessário para as definições de segurança do Swagger
 using System.Text;
 using ValiKop.Api.Data;
 using ValiKop.Api.Middlewares;
@@ -11,13 +10,11 @@ using ValiKop.Shared.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --- PASSO 1: CONFIGURAÇÃO DO BANCO DE DADOS ---
-// Registra o DbContext usando a ConnectionString definida no appsettings.json
+// --- 1. BANCO DE DADOS ---
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// --- PASSO 2: INJEÇÃO DE DEPENDÊNCIA (SERVICES) ---
-// Registra as suas classes de negócio para que possam ser usadas nas Controllers
+// --- 2. INJEÇÃO DE DEPENDÊNCIA (SERVICES) ---
 builder.Services.AddScoped<IProdutoService, ProdutoService>();
 builder.Services.AddScoped<ICategoriaService, CategoriaService>();
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
@@ -25,10 +22,10 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ISalgadoService, SalgadoService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 
-// --- PASSO 3: CONFIGURAÇÃO DE AUTENTICAÇÃO JWT ---
-// O uso do "?? " evita o erro de ArgumentNullException se a chave não estiver no JSON
-var jwtKey = builder.Configuration["Jwt:Key"];
-var jwtIssuer = builder.Configuration["Jwt:Issuer"];
+// --- 3. AUTENTICAÇÃO JWT ---
+var jwtKey = builder.Configuration["Jwt:Key"]!;
+var jwtIssuer = builder.Configuration["Jwt:Issuer"]!;
+var jwtAudience = builder.Configuration["Jwt:Audience"]!;
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -36,47 +33,40 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
-            ValidateAudience = false,
+            ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             ValidIssuer = jwtIssuer,
+            ValidAudience = jwtAudience,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
         };
     });
 
-// --- PASSO 4: CONFIGURAÇÃO DO SWAGGER (CADEADO) ---
-// Ajustado para as versões 10.x dos pacotes para evitar erro de 'Reference'
+builder.Services.AddAuthorization();
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
+
+// --- 4. SWAGGER COM A NOVA SINTAXE (Baseado na sua imagem) ---
+builder.Services.AddSwaggerGen(options =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "ValiKop API", Version = "v1" });
-
-    // Definimos o esquema de segurança Bearer
-    var securityScheme = new OpenApiSecurityScheme
+    // Usamos caminhos curtos. O conflito de 'Models' é resolvido pelo compilador 
+    // ao usar a estrutura de delegate (options => { ... })
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Name = "Authorization",
-        Description = "Informe o token JWT. Exemplo: Bearer {seu_token}",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
         BearerFormat = "JWT",
-        Reference = new OpenApiReference
-        {
-            Type = ReferenceType.SecurityScheme,
-            Id = "Bearer"
-        }
-    };
+        Description = "Input your Bearer token in this format - Bearer {your token here} to access this API"
+    });
 
-    c.AddSecurityDefinition("Bearer", securityScheme);
-
-    // Aplica a exigência do cadeado em todos os endpoints
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
     {
-        { securityScheme, Array.Empty<string>() }
+        [new OpenApiSecuritySchemeReference("Bearer", document)] = []
+
     });
 });
 
-// --- PASSO 5: POLÍTICA DE CORS ---
+// --- 5. CORS ---
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("DefaultCors", policy =>
@@ -85,14 +75,9 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddAuthorization();
-builder.Services.AddControllers();
-
 var app = builder.Build();
 
-// --- PASSO 6: PIPELINE DE MIDDLEWARES (A ORDEM IMPORTA!) ---
-
-// Habilita o Swagger apenas em ambiente de desenvolvimento
+// --- 6. MIDDLEWARES ---
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -100,14 +85,11 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-// Middleware de CORS deve vir antes da Autenticação
 app.UseCors("DefaultCors");
 
-// Middleware de tratamento global de erros
+// Middleware de erro
 app.UseMiddleware<ExceptionMiddleware>();
 
-// Ordem obrigatória: Autenticação ANTES da Autorização
 app.UseAuthentication();
 app.UseAuthorization();
 
