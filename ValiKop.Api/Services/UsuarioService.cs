@@ -114,8 +114,6 @@ namespace ValiKop.Api.Services
             };
         }
 
-
-
         // USUÁRIO: alterar senha
         public async Task AlterarSenhaAsync(int usuarioId, UsuarioAlterarSenhaDTO dto)
         {
@@ -143,7 +141,6 @@ namespace ValiKop.Api.Services
 
             await _context.SaveChangesAsync();
         }
-
         
         // GET ALL
         public async Task<List<UsuarioDTO>> GetAllAsync()
@@ -165,27 +162,6 @@ namespace ValiKop.Api.Services
         {
             var usuario = await _context.Usuarios.FindAsync(usuarioId);
             if (usuario == null) return null;
-
-            return new UsuarioDTO
-            {
-                Id = usuario.Id,
-                Nome = usuario.Nome,
-                TipoUsuario = usuario.TipoUsuario.ToString(),
-                Ativo = usuario.Ativo,
-                PasswordTemp = usuario.PasswordTemp
-            };
-        }
-        
-        // LOGIN
-        public async Task<UsuarioDTO?> LoginAsync(string login, string senha)
-        {
-            var usuario = await _context.Usuarios
-                .FirstOrDefaultAsync(u => u.Login == login && u.Ativo);
-
-            if (usuario == null) return null;
-
-            var senhaValida = PasswordHasher.Verify(senha, usuario.PasswordHash, usuario.PasswordSalt);
-            if (!senhaValida) return null;
 
             return new UsuarioDTO
             {
