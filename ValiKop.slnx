@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="ValiKop.Api/ValiKop.Api.csproj" Id="c47625eb-e175-4f10-8035-ed19e26764fd" />
+  <Project Path="ValiKop.Bridge/ValiKop.Bridge.csproj" Id="a6fb837e-7e7b-4365-aea3-c225df4467d5" />
+  <Project Path="ValiKop.Client/ValiKop.Client.csproj" />
+  <Project Path="ValiKop.Shared/ValiKop.Shared.csproj" />
+</Solution>
