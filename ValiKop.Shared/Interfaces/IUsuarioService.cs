@@ -29,10 +29,5 @@ namespace ValiKop.Shared.Interfaces
 
         // Busca usuário por ID
         Task<UsuarioDTO?> GetByIdAsync(int usuarioId);
-
-
-        // LOGIN
-        // Retorna usuário se login/senha estiverem corretos
-        Task<UsuarioDTO?> LoginAsync(string login, string senha);
     }
 }
