@@ -33,6 +33,51 @@ public class SalgadoService : ISalgadoService
             .ToListAsync();
     }
 
+    // --- BUSCAR APENAS INATIVOS ---
+    public async Task<IEnumerable<SalgadoDTO>> GetInativosAsync()
+    {
+        return await _context.Salgados
+            .AsNoTracking()
+            .Where(s => !s.Ativo) // Filtra os inativos
+            .Include(s => s.Categoria)
+            .Select(s => new SalgadoDTO
+            {
+                Id = s.Id,
+                Nome = s.Nome,
+                Lote = s.Lote,
+                ValidadeHoras = s.ValidadeHoras,
+                ValidadeDias = s.ValidadeDias,
+                Categoria = s.Categoria.Nome,
+                Ativo = s.Ativo
+            })
+            .ToListAsync();
+    }
+
+    // --- SUGESTÕES DE AUTO-COMPLETE ---
+    public async Task<IEnumerable<SugestaoSalgadoDTO>> GetSugestoesAsync()
+    {
+        return await _context.Salgados
+            .Include(s => s.Categoria)
+            .GroupBy(s => new
+            {
+                s.Nome,
+                s.ValidadeHoras,
+                s.ValidadeDias,
+                s.CategoriaId,
+                CategoriaNome = s.Categoria!.Nome
+            })
+            .Select(g => new SugestaoSalgadoDTO
+            {
+                Nome = g.Key.Nome,
+                ValidadeHoras = g.Key.ValidadeHoras,
+                ValidadeDias = g.Key.ValidadeDias,
+                CategoriaId = g.Key.CategoriaId,
+                CategoriaNome = g.Key.CategoriaNome
+            })
+            .OrderBy(s => s.Nome) // Retorna em ordem alfabética
+            .ToListAsync();
+    }
+
     public async Task<SalgadoDTO?> GetByIdAsync(int id)
     {
         var salgado = await _context.Salgados
@@ -65,9 +110,7 @@ public class SalgadoService : ISalgadoService
             CategoriaId = dto.CategoriaId,
             UsuarioId = usuarioId,
             Ativo = true
-
         };
-
 
         _context.Salgados.Add(salgado);
         await _context.SaveChangesAsync();
@@ -96,6 +139,7 @@ public class SalgadoService : ISalgadoService
             ?? throw new Exception("Erro ao atualizar salgado");
     }
 
+    // --- INATIVAR ---
     public async Task<SalgadoDTO> InativarAsync(int id)
     {
         var salgado = await _context.Salgados
@@ -118,6 +162,43 @@ public class SalgadoService : ISalgadoService
             Categoria = salgado.Categoria.Nome,
             Ativo = salgado.Ativo
         };
+    }
+
+    // --- REATIVAR ---
+    public async Task<SalgadoDTO> ReativarAsync(int id)
+    {
+        var salgado = await _context.Salgados
+            .Include(s => s.Categoria)
+            .FirstOrDefaultAsync(s => s.Id == id && !s.Ativo);
+
+        if (salgado == null)
+            throw new Exception("Salgado não encontrado ou já está ativo");
+
+        salgado.Ativo = true;
+        await _context.SaveChangesAsync();
+
+        return new SalgadoDTO
+        {
+            Id = salgado.Id,
+            Nome = salgado.Nome,
+            Lote = salgado.Lote,
+            ValidadeHoras = salgado.ValidadeHoras,
+            ValidadeDias = salgado.ValidadeDias,
+            Categoria = salgado.Categoria.Nome,
+            Ativo = salgado.Ativo
+        };
+    }
+
+    // --- HARD DELETE ---
+    public async Task ExcluirDefinitivoAsync(int id)
+    {
+        var salgado = await _context.Salgados.FindAsync(id);
+
+        if (salgado == null)
+            throw new Exception("Salgado não encontrado");
+
+        _context.Salgados.Remove(salgado);
+        await _context.SaveChangesAsync();
     }
 
     public async Task<SalgadoPrintDTO?> GetPrintAsync(int id, int usuarioId)
@@ -148,5 +229,4 @@ public class SalgadoService : ISalgadoService
             Responsavel = salgado.Usuario.Nome
         };
     }
-
 }

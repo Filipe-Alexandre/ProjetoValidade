@@ -25,6 +25,23 @@ public class SalgadosController : ControllerBase
         return Ok(result);
     }
 
+    // --- ENDPOINT DE SUGESTÕES ---
+    [HttpGet("sugestoes")]
+    public async Task<IActionResult> ObterSugestoes()
+    {
+        var sugestoes = await _service.GetSugestoesAsync();
+        return Ok(sugestoes);
+    }
+
+    // --- GET INATIVOS ---
+    [HttpGet("inativos")]
+    [Authorize(Roles = "Administrador")] // Mesma regra de segurança
+    public async Task<IActionResult> GetInativos()
+    {
+        var result = await _service.GetInativosAsync();
+        return Ok(result);
+    }
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
@@ -33,20 +50,31 @@ public class SalgadosController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody]SalgadoFormDTO dto)
+    [Authorize(Roles = "Administrador")] // Colocando regras Admin para manipulação
+    public async Task<IActionResult> Create([FromBody] SalgadoFormDTO dto)
     {
         var result = await _service.CreateAsync(dto, UsuarioId);
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id,[FromBody] SalgadoFormDTO dto)
+    [Authorize(Roles = "Administrador")]
+    public async Task<IActionResult> Update(int id, [FromBody] SalgadoFormDTO dto)
     {
-        var result = await _service.UpdateAsync(id, dto);
-        return Ok(result);
+        try
+        {
+            var result = await _service.UpdateAsync(id, dto);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return NotFound(new { mensagem = ex.Message });
+        }
     }
 
-    [HttpDelete("{id}")]
+    // --- PATCH PARA INATIVAR ---
+    [HttpPatch("{id}/inativar")]
+    [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> Inativar(int id)
     {
         try
@@ -60,6 +88,37 @@ public class SalgadosController : ControllerBase
         }
     }
 
+    // --- PATCH PARA REATIVAR ---
+    [HttpPatch("{id}/reativar")]
+    [Authorize(Roles = "Administrador")]
+    public async Task<IActionResult> Reativar(int id)
+    {
+        try
+        {
+            var result = await _service.ReativarAsync(id);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return NotFound(new { mensagem = ex.Message });
+        }
+    }
+
+    // --- DELETE DEFINITIVO ---
+    [HttpDelete("{id}")]
+    [Authorize(Roles = "Administrador")]
+    public async Task<IActionResult> ExcluirDefinitivo(int id)
+    {
+        try
+        {
+            await _service.ExcluirDefinitivoAsync(id);
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            return NotFound(new { mensagem = ex.Message });
+        }
+    }
 
     [HttpGet("imprimir/{id}")]
     public async Task<IActionResult> Print(int id)

@@ -7,5 +7,7 @@ namespace ValiKop.Shared.Interfaces
         Task<List<DashboardDTO>> GetAllAsync();
 
         Task<List<DashboardPrintDTO>> PrintEmCascataAsync(DashboardPrintRequestDTO request,int usuarioId);
+
+        Task<DashboardResumoDTO> GetResumoAsync();
     }
 }

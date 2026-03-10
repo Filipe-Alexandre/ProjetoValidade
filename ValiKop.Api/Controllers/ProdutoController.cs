@@ -22,12 +22,10 @@ namespace ValiKop.Api.Controllers
         public async Task<IActionResult> Criar([FromBody] ProdutoFormDTO dto)
         {
             var usuarioId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-
             var produto = await _produtoService.AddAsync(dto, usuarioId);
             return Ok(produto);
         }
 
-        // READ - ALL
         [HttpGet]
         public async Task<IActionResult> Listar()
         {
@@ -35,7 +33,23 @@ namespace ValiKop.Api.Controllers
             return Ok(produtos);
         }
 
-        // READ - BY ID (FORM)
+        // --- ENDPOINT DE SUGESTÕES ---
+        [HttpGet("sugestoes")]
+        public async Task<IActionResult> ObterSugestoes()
+        {
+            var sugestoes = await _produtoService.GetSugestoesAsync();
+            return Ok(sugestoes);
+        }
+
+        // --- GET INATIVOS ---
+        [HttpGet("inativos")]
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> ListarInativos()
+        {
+            var produtos = await _produtoService.GetInativosAsync();
+            return Ok(produtos);
+        }
+
         [HttpGet("{id:int}")]
         public async Task<IActionResult> BuscarPorId(int id)
         {
@@ -43,7 +57,6 @@ namespace ValiKop.Api.Controllers
             return Ok(produto);
         }
 
-        // UPDATE (ADMIN)
         [HttpPut("{id:int}")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Atualizar(int id, [FromBody] ProdutoFormDTO dto)
@@ -52,8 +65,8 @@ namespace ValiKop.Api.Controllers
             return Ok(produto);
         }
 
-        // DELETE / INATIVAR (ADMIN)
-        [HttpDelete("{id:int}")]
+        // --- PATCH PARA INATIVAR ---
+        [HttpPatch("{id:int}/inativar")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Inativar(int id)
         {
@@ -61,7 +74,24 @@ namespace ValiKop.Api.Controllers
             return Ok(produto);
         }
 
-        // GET BY CATEGORY
+        // --- PATCH PARA REATIVAR ---
+        [HttpPatch("{id:int}/reativar")]
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> Reativar(int id)
+        {
+            var produto = await _produtoService.ReativarAsync(id);
+            return Ok(produto);
+        }
+
+        // --- DELETE DEFINITIVO ---
+        [HttpDelete("{id:int}")]
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> ExcluirDefinitivo(int id)
+        {
+            await _produtoService.ExcluirDefinitivoAsync(id);
+            return NoContent();
+        }
+
         [HttpGet("categoria/{categoriaId:int}")]
         public async Task<IActionResult> ListarPorCategoria(int categoriaId)
         {
@@ -69,12 +99,10 @@ namespace ValiKop.Api.Controllers
             return Ok(produtos);
         }
 
-        // PRINT
         [HttpGet("imprimir/{id:int}")]
         public async Task<IActionResult> Imprimir(int id)
         {
             var usuarioId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-
             var produto = await _produtoService.GetParaImpressaoAsync(id, usuarioId);
             return Ok(produto);
         }

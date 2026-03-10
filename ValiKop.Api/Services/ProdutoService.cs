@@ -17,7 +17,6 @@ namespace ValiKop.Api.Services
             _context = context;
         }
 
-        // CREATE
         public async Task<ProdutoDTO> AddAsync(ProdutoFormDTO dto, int usuarioId)
         {
             var existe = await _context.Produtos.AnyAsync(p =>
@@ -53,10 +52,10 @@ namespace ValiKop.Api.Services
             };
         }
 
-        // READ ALL
         public async Task<List<ProdutoDTO>> GetAllAsync()
         {
             return await _context.Produtos
+                .Include(p => p.Categoria) // Garantir que a Categoria seja carregada
                 .Where(p => p.Ativo)
                 .Select(p => new ProdutoDTO
                 {
@@ -65,13 +64,54 @@ namespace ValiKop.Api.Services
                     Lote = p.Lote,
                     DataPrimaria = p.DataPrimaria,
                     ValidadeDias = p.ValidadeDias,
-                    Categoria = p.Categoria.Nome,
+                    Categoria = p.Categoria!.Nome,
                     Ativo = p.Ativo
                 })
                 .ToListAsync();
         }
 
-        // READ BY ID
+        // --- GET INATIVOS ---
+        public async Task<List<ProdutoDTO>> GetInativosAsync()
+        {
+            return await _context.Produtos
+                .Include(p => p.Categoria)
+                .Where(p => !p.Ativo) // Busca apenas os que estão com Ativo = false
+                .Select(p => new ProdutoDTO
+                {
+                    Id = p.Id,
+                    Nome = p.Nome,
+                    Lote = p.Lote,
+                    DataPrimaria = p.DataPrimaria,
+                    ValidadeDias = p.ValidadeDias,
+                    Categoria = p.Categoria!.Nome,
+                    Ativo = p.Ativo
+                })
+                .ToListAsync();
+        }
+
+        // --- SUGESTÕES DE AUTO-COMPLETE ---
+        public async Task<List<SugestaoProdutoDTO>> GetSugestoesAsync()
+        {
+            return await _context.Produtos
+                .Include(p => p.Categoria)
+                .GroupBy(p => new
+                {
+                    p.Nome,
+                    p.ValidadeDias,
+                    p.CategoriaId,
+                    CategoriaNome = p.Categoria!.Nome
+                })
+                .Select(g => new SugestaoProdutoDTO
+                {
+                    Nome = g.Key.Nome,
+                    ValidadeDias = g.Key.ValidadeDias,
+                    CategoriaId = g.Key.CategoriaId,
+                    CategoriaNome = g.Key.CategoriaNome
+                })
+                .OrderBy(s => s.Nome) // Retorna em ordem alfabética
+                .ToListAsync();
+        }
+
         public async Task<ProdutoFormDTO?> GetByIdAsync(int id)
         {
             var produto = await _context.Produtos
@@ -90,7 +130,6 @@ namespace ValiKop.Api.Services
             };
         }
 
-        // UPDATE
         public async Task<ProdutoDTO> UpdateAsync(int id, ProdutoFormDTO dto)
         {
             var produto = await _context.Produtos
@@ -118,7 +157,6 @@ namespace ValiKop.Api.Services
             produto.ValidadeDias = dto.ValidadeDias;
             produto.CategoriaId = dto.CategoriaId;
 
-
             await _context.SaveChangesAsync();
             await _context.Entry(produto).Reference(p => p.Categoria).LoadAsync();
 
@@ -134,18 +172,15 @@ namespace ValiKop.Api.Services
             };
         }
 
-        // SOFT DELETE
+        // --- INATIVAR ---
         public async Task<ProdutoDTO> InativarAsync(int id)
         {
             var produto = await _context.Produtos
                 .Include(p => p.Categoria)
-                .FirstOrDefaultAsync(p => p.Id == id);
+                .FirstOrDefaultAsync(p => p.Id == id && p.Ativo);
 
             if (produto == null)
-                throw new NotFoundException("Produto não encontrado.");
-
-            if (!produto.Ativo)
-                throw new BusinessException("Produto já está inativo.");
+                throw new NotFoundException("Produto não encontrado ou já está inativo.");
 
             produto.Ativo = false;
             await _context.SaveChangesAsync();
@@ -157,15 +192,60 @@ namespace ValiKop.Api.Services
                 Lote = produto.Lote,
                 DataPrimaria = produto.DataPrimaria,
                 ValidadeDias = produto.ValidadeDias,
-                Categoria = produto.Categoria.Nome,
-                Ativo = false
+                Categoria = produto.Categoria?.Nome,
+                Ativo = produto.Ativo
             };
         }
 
-        // GET BY CATEGORY
+        // --- REATIVAR ---
+        public async Task<ProdutoDTO> ReativarAsync(int id)
+        {
+            var produto = await _context.Produtos
+                .Include(p => p.Categoria)
+                .FirstOrDefaultAsync(p => p.Id == id && !p.Ativo);
+
+            if (produto == null)
+                throw new NotFoundException("Produto não encontrado ou já está ativo.");
+
+            var duplicado = await _context.Produtos.AnyAsync(p =>
+                p.Nome == produto.Nome &&
+                p.Lote == produto.Lote &&
+                p.Ativo);
+
+            if (duplicado)
+                throw new BusinessException("Não é possível reativar este produto, pois já existe outro ativo com o mesmo nome e lote.");
+
+            produto.Ativo = true;
+            await _context.SaveChangesAsync();
+
+            return new ProdutoDTO
+            {
+                Id = produto.Id,
+                Nome = produto.Nome,
+                Lote = produto.Lote,
+                DataPrimaria = produto.DataPrimaria,
+                ValidadeDias = produto.ValidadeDias,
+                Categoria = produto.Categoria?.Nome,
+                Ativo = produto.Ativo
+            };
+        }
+
+        // --- HARD DELETE ---
+        public async Task ExcluirDefinitivoAsync(int id)
+        {
+            var produto = await _context.Produtos.FindAsync(id);
+
+            if (produto == null)
+                throw new NotFoundException("Produto não encontrado.");
+
+            _context.Produtos.Remove(produto);
+            await _context.SaveChangesAsync();
+        }
+
         public async Task<List<ProdutoDTO>> GetByCategoriaIdAsync(int categoriaId)
         {
             return await _context.Produtos
+                .Include(p => p.Categoria)
                 .Where(p => p.Ativo && p.CategoriaId == categoriaId)
                 .Select(p => new ProdutoDTO
                 {
@@ -173,13 +253,12 @@ namespace ValiKop.Api.Services
                     Nome = p.Nome,
                     Lote = p.Lote,
                     DataPrimaria = p.DataPrimaria,
-                    Categoria = p.Categoria.Nome,
+                    Categoria = p.Categoria!.Nome,
                     Ativo = p.Ativo
                 })
                 .ToListAsync();
         }
 
-        // PRINT
         public async Task<ProdutoPrintDTO> GetParaImpressaoAsync(int produtoId, int usuarioId)
         {
             var produto = await _context.Produtos
