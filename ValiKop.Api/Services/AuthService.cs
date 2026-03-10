@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-//JWT
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -10,7 +9,6 @@ using ValiKop.Shared.DTOs.Auth;
 using ValiKop.Shared.DTOs.Usuario;
 using ValiKop.Shared.Interfaces;
 using ValiKop.Shared.Models.Enums;
-
 
 namespace ValiKop.Api.Services
 {
@@ -30,8 +28,9 @@ namespace ValiKop.Api.Services
             if (dto.NovaSenha != dto.ConfirmacaoSenha)
                 throw new Exception("A nova senha e a confirmação não conferem.");
 
-            var usuario = await _context.Usuarios.FindAsync(usuarioId)
-                ?? throw new Exception("Usuário não encontrado.");
+            // Adicionada trava de segurança: Usuário deve existir E estar Ativo
+            var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Id == usuarioId && u.Ativo)
+                ?? throw new Exception("Acesso negado: Usuário inexistente ou inativo.");
 
             if (!usuario.PasswordTemp)
             {
@@ -56,6 +55,7 @@ namespace ValiKop.Api.Services
 
         public async Task<LoginResultDTO?> LoginAsync(LoginDTO dto)
         {
+            // Busca apenas usuários ATIVOS. Se estiver inativo, retorna nulo imediatamente.
             var usuario = await _context.Usuarios
                 .FirstOrDefaultAsync(u => u.Login == dto.User && u.Ativo);
 
@@ -76,20 +76,17 @@ namespace ValiKop.Api.Services
                  new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
                  new Claim(ClaimTypes.Name, usuario.Nome),
                  new Claim(ClaimTypes.Role, usuario.TipoUsuario.ToString()),
-                 new Claim("PasswordTemp", usuario.PasswordTemp.ToString())
+                 new Claim("PasswordTemp", usuario.PasswordTemp.ToString().ToLower())
             };
 
-            // Obter configurações do appsettings
             string key = _configuration["Jwt:Key"];
             string issuer = _configuration["Jwt:Issuer"];
             string audience = _configuration["Jwt:Audience"];
             int expireHoras = int.Parse(_configuration["Jwt:ExpireHoras"]);
 
-            // Criar chave e credenciais
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
-            // Criar token
             var token = new JwtSecurityToken(
                 issuer: issuer,
                 audience: audience,
@@ -98,7 +95,6 @@ namespace ValiKop.Api.Services
                 signingCredentials: credentials
             );
 
-            // Retornar token como string
             var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
 
             return new LoginResultDTO
