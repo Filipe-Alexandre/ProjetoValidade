@@ -6,7 +6,7 @@ namespace ValiKop.Shared.DTOs.Usuario
     {
         public int Id { get; set; }
         public string Nome { get; set; } = string.Empty;
-        public string User { get; set; }
+        public string Login { get; set; } = string.Empty;
         public string TipoUsuario { get; set; }
         public bool Ativo { get; set; }
         public bool PasswordTemp { get; set; }

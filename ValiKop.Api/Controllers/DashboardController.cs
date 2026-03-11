@@ -19,14 +19,14 @@ namespace ValiKop.Api.Controllers
         }
 
         // --- NOVO ENDPOINT DE MÉTRICAS ---
-        [HttpGet("resumo")]
+        [HttpGet]
         public async Task<IActionResult> GetResumo()
         {
             var resumo = await _dashboardService.GetResumoAsync();
             return Ok(resumo);
         }
 
-        [HttpGet]
+        [HttpGet("itens")]
         public async Task<IActionResult> GetAll()
         {
             var itens = await _dashboardService.GetAllAsync();

@@ -43,6 +43,7 @@ namespace ValiKop.Api.Services
             {
                 Id = usuario.Id,
                 Nome = usuario.Nome,
+                Login = usuario.Login,
                 TipoUsuario = usuario.TipoUsuario.ToString(),
                 Ativo = usuario.Ativo,
                 PasswordTemp = usuario.PasswordTemp,
@@ -74,7 +75,7 @@ namespace ValiKop.Api.Services
             {
                 Id = usuario.Id,
                 Nome = usuario.Nome,
-                User = usuario.Login,
+                Login = usuario.Login,
                 TipoUsuario = usuario.TipoUsuario.ToString(),
                 Ativo = usuario.Ativo,
                 PasswordTemp = usuario.PasswordTemp
@@ -98,6 +99,7 @@ namespace ValiKop.Api.Services
             {
                 Id = usuario.Id,
                 Nome = usuario.Nome,
+                Login = usuario.Login,
                 TipoUsuario = usuario.TipoUsuario.ToString(),
                 Ativo = usuario.Ativo,
                 PasswordTemp = usuario.PasswordTemp
@@ -117,6 +119,7 @@ namespace ValiKop.Api.Services
             {
                 Id = usuario.Id,
                 Nome = usuario.Nome,
+                Login = usuario.Login,
                 TipoUsuario = usuario.TipoUsuario.ToString(),
                 Ativo = usuario.Ativo,
                 PasswordTemp = usuario.PasswordTemp
@@ -193,6 +196,7 @@ namespace ValiKop.Api.Services
                 {
                     Id = u.Id,
                     Nome = u.Nome,
+                    Login = u.Login,
                     TipoUsuario = u.TipoUsuario.ToString(),
                     Ativo = u.Ativo,
                     PasswordTemp = u.PasswordTemp
@@ -209,6 +213,7 @@ namespace ValiKop.Api.Services
                 {
                     Id = u.Id,
                     Nome = u.Nome,
+                    Login = u.Login,
                     TipoUsuario = u.TipoUsuario.ToString(),
                     Ativo = u.Ativo,
                     PasswordTemp = u.PasswordTemp
@@ -225,6 +230,7 @@ namespace ValiKop.Api.Services
             {
                 Id = usuario.Id,
                 Nome = usuario.Nome,
+                Login = usuario.Login,
                 TipoUsuario = usuario.TipoUsuario.ToString(),
                 Ativo = usuario.Ativo,
                 PasswordTemp = usuario.PasswordTemp
