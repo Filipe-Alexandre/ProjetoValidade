@@ -35,7 +35,7 @@ public class UsuarioController : ControllerBase
         return Ok(usuarios);
     }
 
-    // --- NOVO: LISTAR INATIVOS ---
+    // --- LISTAR INATIVOS ---
     [Authorize(Roles = "Administrador")]
     [HttpGet("inativos")]
     public async Task<IActionResult> ListarInativos()
@@ -72,7 +72,7 @@ public class UsuarioController : ControllerBase
         return Ok(usuario);
     }
 
-    // --- MUDANÇA: PATCH PARA INATIVAR ---
+    // --- PATCH PARA INATIVAR ---
     [Authorize(Roles = "Administrador")]
     [HttpPatch("{id}/inativar")]
     public async Task<IActionResult> Inativar(int id)
@@ -89,7 +89,7 @@ public class UsuarioController : ControllerBase
         }
     }
 
-    // --- NOVO: PATCH PARA REATIVAR ---
+    // --- PATCH PARA REATIVAR ---
     [Authorize(Roles = "Administrador")]
     [HttpPatch("{id}/reativar")]
     public async Task<IActionResult> Reativar(int id)
@@ -106,7 +106,7 @@ public class UsuarioController : ControllerBase
         }
     }
 
-    // --- NOVO: DELETE DEFINITIVO ---
+    // --- DELETE DEFINITIVO ---
     [Authorize(Roles = "Administrador")]
     [HttpDelete("{id}")]
     public async Task<IActionResult> ExcluirDefinitivo(int id)

@@ -17,12 +17,9 @@ namespace ValiKop.Shared.Interfaces
         // CONSULTAS
         Task<List<UsuarioDTO>> GetAllAsync();
         Task<UsuarioDTO?> GetByIdAsync(int usuarioId);
-<<<<<<< HEAD
-=======
         Task<List<UsuarioDTO>> GetInativosAsync(); // NOVO
 
         // USUÁRIO
         Task AlterarSenhaAsync(int usuarioId, UsuarioAlterarSenhaDTO dto);
->>>>>>> c61bf2d621289125cf4ccd8de2b041ae2baf9dbe
     }
 }

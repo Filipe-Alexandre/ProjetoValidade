@@ -60,24 +60,28 @@ namespace ValiKop.Api.Services
             if (usuario == null)
                 throw new Exception("Usuário não encontrado.");
 
+            var loginEmUso = await _context.Usuarios
+        .AnyAsync(u => u.Login == dto.Login && u.Id != usuarioId);
+
             usuario.Nome = dto.Nome;
+            usuario.Login = dto.Login;
             usuario.TipoUsuario = dto.TipoUsuario;
             usuario.Ativo = dto.Ativo;
 
-            // BUG CORRIGIDO AQUI: O SaveChanges deve vir ANTES do return!
             await _context.SaveChangesAsync();
 
             return new UsuarioDTO
             {
                 Id = usuario.Id,
                 Nome = usuario.Nome,
+                User = usuario.Login,
                 TipoUsuario = usuario.TipoUsuario.ToString(),
                 Ativo = usuario.Ativo,
                 PasswordTemp = usuario.PasswordTemp
             };
         }
 
-        // --- MUDANÇA: INATIVAR ---
+        // --- INATIVAR ---
         public async Task<UsuarioDTO> InativarAsync(int usuarioId, int adminId)
         {
             var usuario = await _context.Usuarios.FindAsync(usuarioId)
@@ -100,7 +104,7 @@ namespace ValiKop.Api.Services
             };
         }
 
-        // --- NOVO: REATIVAR ---
+        // --- REATIVAR ---
         public async Task<UsuarioDTO> ReativarAsync(int usuarioId, int adminId)
         {
             var usuario = await _context.Usuarios.FindAsync(usuarioId)
@@ -119,7 +123,7 @@ namespace ValiKop.Api.Services
             };
         }
 
-        // --- NOVO: EXCLUIR DEFINITIVO (HARD DELETE) ---
+        // --- EXCLUIR DEFINITIVO (HARD DELETE) ---
         public async Task ExcluirDefinitivoAsync(int usuarioId, int adminId)
         {
             var usuario = await _context.Usuarios.FindAsync(usuarioId)
@@ -196,7 +200,7 @@ namespace ValiKop.Api.Services
                 .ToListAsync();
         }
 
-        // --- NOVO: BUSCAR INATIVOS ---
+        // --- BUSCAR INATIVOS ---
         public async Task<List<UsuarioDTO>> GetInativosAsync()
         {
             return await _context.Usuarios
