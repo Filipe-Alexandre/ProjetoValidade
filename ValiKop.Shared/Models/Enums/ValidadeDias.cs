@@ -2,7 +2,7 @@
 {
     public enum ValidadeDias
     {
-        Dia1,
+        Dia1, 
         Dias2,
         Dias3,
         Dias5,

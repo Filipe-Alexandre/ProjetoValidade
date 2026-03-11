@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ValiKop.Shared.Interfaces;
+using ValiKop.Shared.DTOs.Dashboard; // Necessário para o request
 using System.Security.Claims;
 
 namespace ValiKop.Api.Controllers
@@ -15,6 +16,14 @@ namespace ValiKop.Api.Controllers
         public DashboardController(IDashboardService dashboardService)
         {
             _dashboardService = dashboardService;
+        }
+
+        // --- NOVO ENDPOINT DE MÉTRICAS ---
+        [HttpGet("resumo")]
+        public async Task<IActionResult> GetResumo()
+        {
+            var resumo = await _dashboardService.GetResumoAsync();
+            return Ok(resumo);
         }
 
         [HttpGet]
@@ -32,10 +41,16 @@ namespace ValiKop.Api.Controllers
             if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int usuarioId))
                 return Unauthorized("Usuário não autenticado ou inválido.");
 
-            var result = await _dashboardService.PrintEmCascataAsync(request, usuarioId);
-
-            return Ok(result);
+            // Pegando as Exceções da Service para evitar erro 500 caso o usuário não exista
+            try
+            {
+                var result = await _dashboardService.PrintEmCascataAsync(request, usuarioId);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { mensagem = ex.Message });
+            }
         }
-
     }
 }

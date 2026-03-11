@@ -17,7 +17,6 @@ namespace ValiKop.Api.Controllers
             _categoriaService = categoriaService;
         }
 
-        // CREATE (ADMIN)
         [HttpPost]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Criar([FromBody] CategoriaFormDTO dto)
@@ -26,7 +25,6 @@ namespace ValiKop.Api.Controllers
             return Ok(categoria);
         }
 
-        // READ - ALL
         [HttpGet]
         public async Task<IActionResult> Listar()
         {
@@ -34,7 +32,15 @@ namespace ValiKop.Api.Controllers
             return Ok(categorias);
         }
 
-        // READ - BY ID
+        // --- NOVO ROTEAMENTO: GET INATIVOS ---
+        [HttpGet("inativos")]
+        [Authorize(Roles = "Administrador")] // Só Admin vê a lixeira
+        public async Task<IActionResult> ListarInativos()
+        {
+            var categorias = await _categoriaService.GetInativosAsync();
+            return Ok(categorias);
+        }
+
         [HttpGet("{id:int}")]
         public async Task<IActionResult> BuscarPorId(int id)
         {
@@ -42,7 +48,6 @@ namespace ValiKop.Api.Controllers
             return Ok(categoria);
         }
 
-        // UPDATE (ADMIN)
         [HttpPut("{id:int}")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Atualizar(int id, [FromBody] CategoriaFormDTO dto)
@@ -51,13 +56,31 @@ namespace ValiKop.Api.Controllers
             return Ok(categoria);
         }
 
-        // DELETE / INATIVAR (ADMIN)
-        [HttpDelete("{id:int}")]
+        // --- AGORA É PATCH ---
+        [HttpPatch("{id:int}/inativar")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Inativar(int id)
         {
             var categoria = await _categoriaService.InativarAsync(id);
             return Ok(categoria);
+        }
+
+        // --- REATIVAR ---
+        [HttpPatch("{id:int}/reativar")]
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> Reativar(int id)
+        {
+            var categoria = await _categoriaService.ReativarAsync(id);
+            return Ok(categoria);
+        }
+
+        // --- HARD DELETE (O VERDADEIRO DELETE REST) ---
+        [HttpDelete("{id:int}")]
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> ExcluirDefinitivo(int id)
+        {
+            await _categoriaService.DeleteAsync(id);
+            return NoContent(); // 204 No Content é o padrão correto para um Delete de sucesso
         }
     }
 }
