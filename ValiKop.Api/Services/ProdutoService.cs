@@ -47,7 +47,7 @@ namespace ValiKop.Api.Services
                 Nome = produto.Nome,
                 Lote = produto.Lote,
                 DataPrimaria = produto.DataPrimaria,
-                Categoria = (await _context.Categorias.FindAsync(produto.CategoriaId))!.Nome,
+                Categoria = produto.Categoria!.Nome,
                 Ativo = true
             };
         }

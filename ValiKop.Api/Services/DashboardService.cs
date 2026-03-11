@@ -160,8 +160,6 @@ namespace ValiKop.Api.Services
                     DataManuseio = dataManuseio,
                     DataFinal = dataManuseio.AddDays(ValidadeDiasMapper.ParaDias(p.ValidadeDias)),
                     Responsavel = usuario.Nome,
-                    Tipo = "Produto",
-                    Id = p.Id
                 })
                 .ToListAsync();
 
@@ -178,8 +176,6 @@ namespace ValiKop.Api.Services
                         .AddHours(ValidadeHorasMapper.ParaHoras(s.ValidadeHoras))
                         .AddDays(ValidadeDiasMapper.ParaDias(s.ValidadeDias)),
                     Responsavel = usuario.Nome,
-                    Tipo = "Salgado",
-                    Id = s.Id
                 })
                 .ToListAsync();
 
